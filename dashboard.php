@@ -29,7 +29,7 @@ if ($conn->connect_error) {
 }
 
 // Fetch food items from the database along with category names
-$sql = "SELECT f.id, f.name, f.description, f.category_id, f.price, c.category_name
+$sql = "SELECT f.id, f.name, f.description, f.category_id, f.price, f.image_filename, c.category_name
         FROM food_items f
         INNER JOIN categories c ON f.category_id = c.id";
 $result = $conn->query($sql);
@@ -140,6 +140,11 @@ if ($result->num_rows > 0) {
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
+
+        .food-item img {
+            max-width: 200px;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -164,9 +169,10 @@ if ($result->num_rows > 0) {
                         <p>Category: <?php echo htmlspecialchars($item['category_name']); ?></p>
                         <p>Price: $<?php echo number_format($item['price'], 2); ?></p>
                         <p>Description: <?php echo htmlspecialchars($item['description']); ?></p>
-                        <form onsubmit="addToCart(event, <?php echo $item['id']; ?>)">
+                        <img class="food-item-image" src="images/<?php echo htmlspecialchars($item['image_filename']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
+                        <form onsubmit="addToCart(event, <?php echo $item['id']; ?>, '<?php echo htmlspecialchars($item['name']); ?>')">
                             <input type="number" name="quantity" class="quantity-input" value="1" min="1" max="10" required>
-                            <button type="submit">Order</button>
+                            <button type="submit">Add to Cart</button>
                         </form>
                     </div>
                 <?php endforeach; ?>
@@ -186,7 +192,7 @@ if ($result->num_rows > 0) {
     <script>
         let cartItems = []; // Array to store cart items
 
-        function addToCart(event, itemId) {
+        function addToCart(event, itemId, itemName) {
             event.preventDefault(); // Prevent form submission
 
             const quantity = parseInt(event.target.elements.quantity.value); // Get quantity from form
@@ -199,10 +205,13 @@ if ($result->num_rows > 0) {
                 cartItems[itemIndex].quantity += quantity;
             } else {
                 // Add new item to cart
-                cartItems.push({ itemId, quantity });
+                cartItems.push({ itemId, itemName, quantity });
             }
 
             updateCartDisplay(); // Update cart display
+
+            // Notify user that item was added to cart
+            showNotification(`Added ${quantity} ${quantity > 1 ? 'items' : 'item'} to cart`);
         }
 
         function updateCartDisplay() {
@@ -214,7 +223,7 @@ if ($result->num_rows > 0) {
             // Display cart items
             cartItems.forEach(item => {
                 const itemElement = document.createElement('div');
-                itemElement.textContent = `Item ID: ${item.itemId}, Quantity: ${item.quantity}`;
+                itemElement.textContent = `${item.itemName} - Quantity: ${item.quantity}`;
                 cartItemsElement.appendChild(itemElement);
             });
         }
@@ -227,11 +236,30 @@ if ($result->num_rows > 0) {
         function closeCart() {
             document.getElementById('cartOverlay').style.display = 'none'; // Hide cart overlay
         }
+        function showNotification(message) {
+            // Create notification element
+            const notificationElement = document.createElement('div');
+            notificationElement.textContent = message;
+            notificationElement.style.position = 'fixed';
+            notificationElement.style.top = '40px';
+            notificationElement.style.left = '20px';
+            notificationElement.style.padding = '10px';
+            notificationElement.style.backgroundColor = '#4CAF50';
+            notificationElement.style.color = '#fff';
+            notificationElement.style.borderRadius = '5px';
+            notificationElement.style.zIndex = '3000';
+
+            // Append notification element to body
+            document.body.appendChild(notificationElement);
+
+            // Automatically remove notification after 3 seconds
+            setTimeout(() => {
+                document.body.removeChild(notificationElement);
+            }, 3000);
+        }
     </script>
 </body>
 </html>
-
-
 
 <?php
 // Close database connection
