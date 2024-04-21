@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 19, 2024 at 09:43 AM
+-- Generation Time: Apr 21, 2024 at 08:38 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -66,19 +66,20 @@ CREATE TABLE `food_items` (
   `name` varchar(255) NOT NULL,
   `description` varchar(200) DEFAULT NULL,
   `category_id` int(11) NOT NULL,
-  `price` decimal(10,2) NOT NULL
+  `price` decimal(10,2) NOT NULL,
+  `image_filename` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `food_items`
 --
 
-INSERT INTO `food_items` (`id`, `name`, `description`, `category_id`, `price`) VALUES
-(2, 'Pizza Margherita', 'Classic Italian pizza with tomato sauce and mozzarella cheese', 1, 12.99),
-(3, 'Chicken Parmesan', 'Breaded chicken cutlet topped with marinara sauce and melted cheese', 1, 14.99),
-(4, 'Grilled Salmon', 'Fresh grilled salmon fillet served with seasonal vegetables', 1, 16.99),
-(5, 'Chocolate Brownie Sundae', 'Warm chocolate brownie topped with vanilla ice cream and chocolate syrup', 2, 6.99),
-(6, 'New York Cheesecake', 'Classic cheesecake topped with strawberry compote', 2, 8.99);
+INSERT INTO `food_items` (`id`, `name`, `description`, `category_id`, `price`, `image_filename`) VALUES
+(2, 'Pizza Margherita', 'Classic Italian pizza with tomato sauce and mozzarella cheese', 1, 12.99, 'pizza.jpg'),
+(3, 'Chicken Parmesan', 'Breaded chicken cutlet topped with marinara sauce and melted cheese', 1, 14.99, 'chicken.jpg'),
+(4, 'Grilled Salmon', 'Fresh grilled salmon fillet served with seasonal vegetables', 1, 16.99, 'salmon.jpg'),
+(5, 'Chocolate Brownie Sundae', 'Warm chocolate brownie topped with vanilla ice cream and chocolate syrup', 2, 6.99, 'chocolate.jpg'),
+(6, 'New York Cheesecake', 'Classic cheesecake topped with strawberry compote', 2, 8.99, 'cheesecake.jpg');
 
 -- --------------------------------------------------------
 
