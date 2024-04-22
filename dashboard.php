@@ -54,13 +54,44 @@ if ($result->num_rows > 0) {
     <link rel="stylesheet" href="styles.css">
     <!-- Font Awesome CDN for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* Custom CSS for positioning user name and cart icon */
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
+    <style>/* Styles for sidebar */
+    /* Styles for sidebar */
+        .cart-sidebar {
+            position: fixed;
+            top: 40px; /* Position below the top bar */
+            bottom: 0; /* Stretch sidebar to the bottom of the viewport */
+            right: -300px; /* Start with sidebar hidden */
+            width: 300px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            transition: right 0.3s ease; /* Smooth transition for sidebar animation */
+            z-index: 900; /* Ensure sidebar is above the overlay */
+            overflow-y: auto; /* Enable vertical scrolling if needed */
         }
 
+        .cart-sidebar-content {
+            padding: 20px;
+            height: 100%; /* Fill the entire height of the sidebar container */
+        }
+
+        /* Overlay styles */
+        .cart-overlay {
+            position: fixed;
+            top: 60px; /* Position below the top bar */
+            bottom: 0; /* Stretch overlay to the bottom of the viewport */
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+            display: none;
+            z-index: 800; /* Ensure overlay is below sidebar */
+        }
+
+        .overlay-active {
+            display: block; /* Display overlay when sidebar is open */
+        }
+
+
+        /* Additional styles for top bar and content */
         .top-bar {
             position: fixed;
             top: 0;
@@ -68,12 +99,13 @@ if ($result->num_rows > 0) {
             width: 100%;
             background-color: #333;
             color: #fff;
-            padding: 10px 20px;
+            padding: 20px 20px;
             box-sizing: border-box;
             z-index: 1000;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 18px;
         }
 
         .top-bar .user-info {
@@ -85,64 +117,62 @@ if ($result->num_rows > 0) {
             font-weight: bold;
             cursor: pointer;
             color: #fff;
-            text-decoration: none; /* Remove underline */
+            text-decoration: none;
             margin-right: 20px;
         }
 
-        .top-bar .user-info .cart-icon {
-            color: #fff;
-            font-size: 1.5rem;
-            margin-right: 10px;
-            cursor: pointer;
+        .top-bar .cart-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .top-bar .cart-info #totalItems {
+            margin-right: 20px;
         }
 
         .dashboard-container {
-            padding-top: 60px; /* Adjust spacing for fixed top bar */
+            padding-top: 80px; /* Adjust spacing for fixed top bar and sidebar */
             padding: 20px;
-            margin-top: 40px; /* Adjust margin for content to avoid overlap with fixed top bar */
+            margin-top: 40px; /* Adjust margin for content to avoid overlap with fixed elements */
+        }
+
+        .food-items {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start; /* Start items from the left */
+            gap: 20px; /* Spacing between items */
         }
 
         .food-item {
-            border: 1px solid #ccc;
-            padding: 10px;
+            width: calc(25% - 20px); /* Initially show 4 items per row */
             margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
             border-radius: 5px;
             background-color: #f9f9f9;
+            box-sizing: border-box; /* Include padding in width calculation */
         }
 
-        /* Style for quantity input */
-        .quantity-input {
-            width: 60px;
-            padding: 5px;
-            text-align: center;
-            margin-right: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        @media (max-width: 1200px) {
+            .food-item {
+                width: calc(33.33% - 20px); /* Show 3 items per row on medium screens */
+            }
         }
 
-        /* Style for cart overlay */
-        .cart-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
+        @media (max-width: 768px) {
+            .food-item {
+                width: calc(50% - 20px); /* Show 2 items per row on smaller screens */
+            }
         }
 
-        .cart-container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        @media (max-width: 480px) {
+            .food-item {
+                width: 100%; /* Show 1 item per row on narrow screens */
+            }
         }
 
         .food-item img {
-            max-width: 200px;
+            max-width: 100%;
             height: auto;
         }
     </style>
@@ -152,16 +182,30 @@ if ($result->num_rows > 0) {
     <div class="top-bar">
         <div class="user-info">
             <a href="edit_profile.php" class="user-name"><?php echo htmlspecialchars($userName); ?></a>
-            <i class="fas fa-shopping-cart cart-icon" onclick="openCart()"></i> <!-- Cart icon with click event -->
+        </div>
+        <div class="cart-info">
+            <span id="totalItems">Total Items in Cart: 0</span> <!-- Display total items count -->
+            <i class="fas fa-shopping-cart cart-icon" onclick="toggleCartSidebar()"></i> <!-- Cart icon with click event -->
         </div>
     </div>
 
+    <!-- Sidebar for cart items -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-sidebar-content">
+            <h3>Your Cart</h3>
+            <div id="cartItemsContainer"></div>
+            <button onclick="closeCartSidebar()">Close</button> <!-- Button to close sidebar -->
+        </div>
+    </div>
+
+    <!-- Overlay for dimming effect -->
+    <div class="cart-overlay" id="cartOverlay" onclick="closeCartSidebar()"></div>
+
     <div class="dashboard-container">
         <div class="dashboard-content">
-            <h2>Welcome to the Food Ordering Dashboard, <?php echo htmlspecialchars($userName); ?>!</h2>
+            <h2>Welcome to the [insert restaurant name], <?php echo htmlspecialchars($userName); ?>!</h2>
 
             <h3>Available Food Items</h3>
-
             <div class="food-items">
                 <?php foreach ($foodItems as $item) : ?>
                     <div class="food-item">
@@ -180,16 +224,22 @@ if ($result->num_rows > 0) {
         </div>
     </div>
 
-    <!-- Cart overlay -->
-    <div class="cart-overlay" id="cartOverlay" onclick="closeCart()">
-        <div class="cart-container">
-            <h2>Your Cart</h2>
-            <div id="cartItems"></div>
-            <button onclick="closeCart()">Close</button> <!-- Close button for cart overlay -->
-        </div>
-    </div>
-
     <script>
+        window.addEventListener('resize', adjustFoodItemWidth);
+
+        function adjustFoodItemWidth() {
+        const containerWidth = document.querySelector('.food-items').offsetWidth;
+        const numItemsPerRow = Math.floor(containerWidth / 300); // Adjust item width based on desired item width (e.g., 300px)
+
+        const foodItems = document.querySelectorAll('.food-item');
+        foodItems.forEach(item => {
+            item.style.width = `calc(${100 / numItemsPerRow}% - 20px)`;
+        });
+        }
+
+        // Call the function initially and on window resize
+        adjustFoodItemWidth();
+
         let cartItems = []; // Array to store cart items
 
         function addToCart(event, itemId, itemName) {
@@ -209,33 +259,49 @@ if ($result->num_rows > 0) {
             }
 
             updateCartDisplay(); // Update cart display
+            toggleCartSidebar(); // Open cart sidebar
 
             // Notify user that item was added to cart
             showNotification(`Added ${quantity} ${quantity > 1 ? 'items' : 'item'} to cart`);
         }
 
         function updateCartDisplay() {
-            const cartItemsElement = document.getElementById('cartItems');
-
-            // Clear previous cart items
-            cartItemsElement.innerHTML = '';
+            const cartItemsContainer = document.getElementById('cartItemsContainer');
+            cartItemsContainer.innerHTML = ''; // Clear previous items
 
             // Display cart items
             cartItems.forEach(item => {
                 const itemElement = document.createElement('div');
                 itemElement.textContent = `${item.itemName} - Quantity: ${item.quantity}`;
-                cartItemsElement.appendChild(itemElement);
+                cartItemsContainer.appendChild(itemElement);
             });
+
+            // Update total items count
+            document.getElementById('totalItems').textContent = `Total Items in Cart: ${cartItems.length}`;
         }
 
-        function openCart() {
-            updateCartDisplay(); // Update cart display
-            document.getElementById('cartOverlay').style.display = 'flex'; // Display cart overlay
+        function toggleCartSidebar() {
+            const cartSidebar = document.getElementById('cartSidebar');
+            const cartOverlay = document.getElementById('cartOverlay');
+
+            // Toggle sidebar visibility
+            if (cartSidebar.style.right === '0px') {
+                cartSidebar.style.right = '-300px'; // Hide sidebar
+                cartOverlay.style.display = 'none'; // Hide overlay
+            } else {
+                cartSidebar.style.right = '0px'; // Show sidebar
+                cartOverlay.style.display = 'block'; // Show overlay
+            }
         }
 
-        function closeCart() {
-            document.getElementById('cartOverlay').style.display = 'none'; // Hide cart overlay
+        function closeCartSidebar() {
+            const cartSidebar = document.getElementById('cartSidebar');
+            const cartOverlay = document.getElementById('cartOverlay');
+
+            cartSidebar.style.right = '-300px'; // Hide sidebar
+            cartOverlay.style.display = 'none'; // Hide overlay
         }
+
         function showNotification(message) {
             // Create notification element
             const notificationElement = document.createElement('div');
@@ -259,6 +325,7 @@ if ($result->num_rows > 0) {
         }
     </script>
 </body>
+
 </html>
 
 <?php
